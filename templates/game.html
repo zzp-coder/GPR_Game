@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Text Annotation Battle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+  <script src="/static/main.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e3f2fd, #fce4ec);
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 20px;
+      color: #37474f;
+    }
+    .game-box {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .sentence {
+      cursor: pointer;
+      padding: 3px 6px;
+      display: inline;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .sentence:hover {
+      background-color: #e0f7fa;
+    }
+    .selected {
+      background-color: #ffeb3b;
+    }
+    #paragraph-box {
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #29b6f6;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0288d1;
+    }
+    #leaderboard {
+      margin-top: 30px;
+    }
+    .leader-item {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-box">
+    <h2>Text Annotation Battle - Welcome, {{ username }}</h2>
+    <div id="paragraph-box"></div>
+
+    <!-- ✅ 把 status 提前 -->
+    <p id="status">Waiting for task...</p>
+    <button onclick="submitSelection()">✅ Confirm Selection</button>
+    <h3>Leaderboard</h3>
+    <div id="leaderboard"></div>
+</div>
+
+  <script>
+    const username = "{{ username }}";
+    window.onload = () => startSocket(username);
+  </script>
+</body>
+</html>
