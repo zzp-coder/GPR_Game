@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: gpr-game
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    preDeployCommand: python -m spacy download en_core_web_sm
