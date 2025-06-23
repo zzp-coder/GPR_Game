@@ -217,15 +217,16 @@ def download_matches_csv():
     conn = sqlite3.connect('/data/game.db')
     c = conn.cursor()
     c.execute('''SELECT id, paragraph_id, player1, player2, selections_p1, selections_p2,
-                        is_match, score_p1, score_p2, duration_p1, duration_p2, timestamp
-                 FROM matches''')
+                        is_match, score_p1, score_p2, duration_p1, duration_p2, attempts_json, timestamp
+                 FROM matches''')  # 添加 attempts_json
     rows = c.fetchall()
     conn.close()
 
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['ID', 'Paragraph ID', 'Player 1', 'Player 2', 'Selections P1', 'Selections P2',
-                     'Is Match', 'Score P1', 'Score P2', 'Duration P1', 'Duration P2', 'Timestamp'])
+                     'Is Match', 'Score P1', 'Score P2', 'Duration P1', 'Duration P2', 'Attempts JSON',
+                     'Timestamp'])  # 添加 Attempts JSON
     writer.writerows(rows)
 
     response = Response(output.getvalue(), mimetype='text/csv')
