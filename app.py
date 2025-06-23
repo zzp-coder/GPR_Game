@@ -1,4 +1,6 @@
 # app.py
+import eventlet
+eventlet.monkey_patch()
 from flask import Flask, render_template, request, redirect, session, jsonify
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import check_password_hash
@@ -238,8 +240,6 @@ def download_matches_csv():
 #     socketio.run(app, debug=True, host="0.0.0.0", port=port, use_reloader=False)
 #
 #server:
-import eventlet
-eventlet.monkey_patch()
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     socketio.run(app, debug=False, host="0.0.0.0", port=port)
