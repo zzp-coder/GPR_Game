@@ -24,9 +24,16 @@ function startSocket(username) {
         }
       };
       box.appendChild(span);
-      box.appendChild(document.createTextNode(" ")); // 添加空格分隔句子
+      box.appendChild(document.createTextNode(" "));
     });
     document.getElementById("status").innerText = "Waiting for your selection...";
+  });
+
+  // ✅ 新增：响应匹配失败事件
+  socket.on("attempt_failed", data => {
+    const msg = `Selections do not match! You have ${data.remaining} attempt(s) left.`;
+    document.getElementById("status").innerText = msg;
+    alert(msg);
   });
 
   updateLeaderboard();
@@ -49,7 +56,7 @@ function updateLeaderboard() {
       const board = document.getElementById("leaderboard");
       board.innerHTML = "";
       const maxScore = Math.max(...data.map(d => d[1]), 1);
-      const displayMax = maxScore * 1.2;  // 为拉开差距设置更大的显示范围
+      const displayMax = maxScore * 1.2;
 
       const colors = ["#4caf50", "#2196f3", "#ff9800", "#e91e63", "#9c27b0"];
 

@@ -1,4 +1,5 @@
 flask
 flask-socketio
+eventlet
+werkzeug
 spacy
-gunicorn

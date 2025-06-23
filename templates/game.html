@@ -28,18 +28,21 @@
       margin: 0 auto;
     }
     .sentence {
-      cursor: pointer;
-      padding: 3px 6px;
-      display: inline;
-      border-radius: 4px;
-      transition: background-color 0.2s;
-    }
-    .sentence:hover {
-      background-color: #e0f7fa;
-    }
-    .selected {
-      background-color: #ffeb3b;
-    }
+  cursor: pointer;
+  padding: 5px 8px;          /* 增大点击区域 */
+  display: inline;     /* 改为inline-block，块级特性更好响应点击 */
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  user-select: none;         /* 防止文字选中影响点击体验 */
+}
+
+.sentence:hover {
+  background-color: #e0f7fa;
+}
+
+.selected {
+  background-color: #ffeb3b !important; /* 强制覆盖，保证点击立即高亮 */
+}
     #paragraph-box {
       line-height: 1.8;
       margin-bottom: 20px;

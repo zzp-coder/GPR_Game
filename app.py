@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, render_template, request, redirect, session, jsonify
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import check_password_hash
@@ -10,13 +11,14 @@ app.secret_key = 'secret!'
 socketio = SocketIO(app)
 
 nlp = spacy.load("en_core_web_sm")
-
 pairs = load_pairs()
 
 online_users = {}
 current_tasks = {}
 selections = {}
 confirmations = {}
+attempts = {}  # 新增：记录每个room的尝试次数
+attempt_logs = {}  # 新增：记录每次尝试的细节
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -59,6 +61,8 @@ def handle_join(data):
 
     if room not in current_tasks:
         current_tasks[room] = get_next_paragraph(room)
+        attempts[room] = 0
+        attempt_logs[room] = []
 
     paragraph = current_tasks[room]
     sentence_list = split_sentences(paragraph['text'])
@@ -80,36 +84,76 @@ def handle_submit(data):
     }
     confirmations.setdefault(room, set()).add(username)
 
-    if len(confirmations[room]) == 2:
-        s1 = set(selections[room][username]['selected'])
-        s2 = set(selections[room][partner]['selected'])
-        match = s1 == s2
-        dur_u = selections[room][username]['duration']
-        dur_p = selections[room][partner]['duration']
-        score_u = calculate_score(len(s1), dur_u)
-        score_p = calculate_score(len(s2), dur_p)
+    if len(confirmations[room]) < 2:
+        return
+
+    # 双方都提交
+    p1, p2 = username, partner
+    if p2 not in selections[room]:
+        return  # 避免错误
+
+    s1 = set(selections[room][p1]['selected'])
+    s2 = set(selections[room][p2]['selected'])
+
+    dur1 = selections[room][p1]['duration']
+    dur2 = selections[room][p2]['duration']
+
+    is_match = s1 == s2
+    attempts[room] += 1
+
+    # 添加到日志
+    attempt_logs[room].append({
+        'attempt': attempts[room],
+        'selections': {
+            p1: list(s1),
+            p2: list(s2)
+        },
+        'durations': {
+            p1: dur1,
+            p2: dur2
+        },
+        'match': is_match
+    })
+
+    if is_match or attempts[room] >= 3:
+        score1 = calculate_score(len(s1), dur1)
+        score2 = calculate_score(len(s2), dur2)
 
         conn = sqlite3.connect('db/game.db')
         c = conn.cursor()
-        c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score_u, username))
-        c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score_p, partner))
+        if is_match:
+            c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score1, p1))
+            c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score2, p2))
+
         c.execute('''INSERT INTO matches
-                  (paragraph_id, player1, player2, selections_p1, selections_p2,
-                   is_match, score_p1, score_p2, duration_p1, duration_p2)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                  (current_tasks[room]['id'], username, partner,
-                   json.dumps(list(s1)), json.dumps(list(s2)), match,
-                   score_u, score_p, dur_u, dur_p))
+                     (paragraph_id, player1, player2, is_match, selections_p1, selections_p2,
+                      score_p1, score_p2, duration_p1, duration_p2, attempts_json)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                  (current_tasks[room]['id'], p1, p2, is_match,
+                   json.dumps(list(s1)), json.dumps(list(s2)),
+                   score1 if is_match else 0, score2 if is_match else 0,
+                   dur1, dur2, json.dumps(attempt_logs[room])))
         conn.commit()
         conn.close()
 
+        # 进入下一个段落
         current_tasks[room] = get_next_paragraph(room)
         sentence_list = split_sentences(current_tasks[room]['text'])
+        selections[room] = {}
         confirmations[room] = set()
+        attempts[room] = 0
+        attempt_logs[room] = []
+
         socketio.emit('start_task', {
             'paragraph': current_tasks[room],
             'sentences': sentence_list
         }, room=room)
+    else:
+        # 匹配失败但还没到三次，通知失败，继续选
+        socketio.emit('attempt_failed', {
+            'remaining': 3 - attempts[room]
+        }, room=room)
+        confirmations[room] = set()
 
 @app.route('/leaderboard')
 def leaderboard():
@@ -120,6 +164,14 @@ def leaderboard():
     conn.close()
     return jsonify(data)
 
+#local:
+# if __name__ == '__main__':
+#     port = int(os.environ.get("PORT", 5001))
+#     socketio.run(app, debug=True, host="0.0.0.0", port=port, use_reloader=False)
+#
+#server:
+import eventlet
+eventlet.monkey_patch()
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5001))
-    socketio.run(app, debug=True, host="0.0.0.0", port=port, use_reloader=False)
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, debug=False, host="0.0.0.0", port=port)
