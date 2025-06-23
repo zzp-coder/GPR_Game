@@ -1,10 +1,14 @@
-# init_db.py
 import sqlite3
+import os
 from werkzeug.security import generate_password_hash
 
-conn = sqlite3.connect('db/game.db')
+# 确保 /data 目录存在（Render 挂载点）
+os.makedirs("/data", exist_ok=True)
+
+conn = sqlite3.connect('/data/game.db')
 c = conn.cursor()
 
+# 重建表
 c.execute('DROP TABLE IF EXISTS users')
 c.execute('DROP TABLE IF EXISTS matches')
 
@@ -32,7 +36,6 @@ c.execute('''CREATE TABLE matches (
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )''')
 
-# 添加初始用户
 users = [
     ('alice', '1234', 'player'),
     ('bob', '1234', 'player'),
@@ -47,4 +50,4 @@ for u, p, r in users:
 
 conn.commit()
 conn.close()
-print("Database initialized.")
+print("✅ Database initialized at /data/game.db")

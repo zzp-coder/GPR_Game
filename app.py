@@ -6,7 +6,8 @@ import json, sqlite3, time, os
 import spacy
 from utils import split_sentences, load_pairs, get_next_paragraph, calculate_score
 import csv
-from flask import render_template_string, make_response
+from flask import render_template_string, Response
+import io
 
 app = Flask(__name__)
 app.secret_key = 'secret!'
@@ -27,7 +28,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        conn = sqlite3.connect('db/game.db')
+        conn = sqlite3.connect('/data/game.db')
         c = conn.cursor()
         c.execute('SELECT password, role FROM users WHERE username=?', (username,))
         row = c.fetchone()
@@ -121,7 +122,7 @@ def handle_submit(data):
         score1 = calculate_score(len(s1), dur1)
         score2 = calculate_score(len(s2), dur2)
 
-        conn = sqlite3.connect('db/game.db')
+        conn = sqlite3.connect('/data/game.db')
         c = conn.cursor()
         if is_match:
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score1, p1))
@@ -159,7 +160,7 @@ def handle_submit(data):
 
 @app.route('/leaderboard')
 def leaderboard():
-    conn = sqlite3.connect('db/game.db')
+    conn = sqlite3.connect('/data/game.db')
     c = conn.cursor()
     c.execute('SELECT username, total_score FROM users WHERE role="player" ORDER BY total_score DESC')
     data = c.fetchall()
@@ -168,7 +169,7 @@ def leaderboard():
 
 @app.route("/admin/users")
 def admin_users():
-    conn = sqlite3.connect('db/game.db')
+    conn = sqlite3.connect('/data/game.db')
     c = conn.cursor()
     c.execute("SELECT id, username, role, total_score FROM users ORDER BY total_score DESC")
     rows = c.fetchall()
@@ -181,7 +182,7 @@ def admin_users():
 
 @app.route("/admin/matches")
 def admin_matches():
-    conn = sqlite3.connect('db/game.db')
+    conn = sqlite3.connect('/data/game.db')
     c = conn.cursor()
     c.execute('''SELECT id, paragraph_id, player1, player2, selections_p1, selections_p2,
                         is_match, score_p1, score_p2, duration_p1, duration_p2, timestamp
@@ -196,23 +197,24 @@ def admin_matches():
 
 @app.route("/admin/download-users")
 def download_users_csv():
-    conn = sqlite3.connect('db/game.db')
+    conn = sqlite3.connect('/data/game.db')
     c = conn.cursor()
     c.execute("SELECT id, username, role, total_score FROM users")
     rows = c.fetchall()
     conn.close()
 
-    si = make_response()
-    writer = csv.writer(si)
+    output = io.StringIO()
+    writer = csv.writer(output)
     writer.writerow(['ID', 'Username', 'Role', 'Score'])
     writer.writerows(rows)
-    si.headers["Content-Disposition"] = "attachment; filename=users.csv"
-    si.headers["Content-type"] = "text/csv"
-    return si
+
+    response = Response(output.getvalue(), mimetype='text/csv')
+    response.headers["Content-Disposition"] = "attachment; filename=users.csv"
+    return response
 
 @app.route("/admin/download-matches")
 def download_matches_csv():
-    conn = sqlite3.connect('db/game.db')
+    conn = sqlite3.connect('/data/game.db')
     c = conn.cursor()
     c.execute('''SELECT id, paragraph_id, player1, player2, selections_p1, selections_p2,
                         is_match, score_p1, score_p2, duration_p1, duration_p2, timestamp
@@ -220,14 +222,15 @@ def download_matches_csv():
     rows = c.fetchall()
     conn.close()
 
-    si = make_response()
-    writer = csv.writer(si)
+    output = io.StringIO()
+    writer = csv.writer(output)
     writer.writerow(['ID', 'Paragraph ID', 'Player 1', 'Player 2', 'Selections P1', 'Selections P2',
                      'Is Match', 'Score P1', 'Score P2', 'Duration P1', 'Duration P2', 'Timestamp'])
     writer.writerows(rows)
-    si.headers["Content-Disposition"] = "attachment; filename=matches.csv"
-    si.headers["Content-type"] = "text/csv"
-    return si
+
+    response = Response(output.getvalue(), mimetype='text/csv')
+    response.headers["Content-Disposition"] = "attachment; filename=matches.csv"
+    return response
 #local:
 # if __name__ == '__main__':
 #     port = int(os.environ.get("PORT", 5001))
