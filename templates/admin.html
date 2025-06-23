@@ -1,9 +1,21 @@
 <!DOCTYPE html>
 <html>
-<head><title>Admin Panel</title></head>
+<head>
+  <title>Admin Panel</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; margin-bottom: 30px; }
+    th, td { border: 1px solid #ccc; padding: 6px 12px; }
+    th { background-color: #f0f0f0; }
+    a { color: #007bff; text-decoration: none; margin-right: 10px; }
+  </style>
+</head>
 <body>
   <h2>Admin Dashboard</h2>
-  <p><a href="/leaderboard" target="_blank">Download Leaderboard JSON</a></p>
-  <p>To reset, delete game.db and re-run init_db.py</p>
+  <p><a href="/leaderboard" target="_blank">🔢 View Leaderboard (JSON)</a></p>
+  <p><a href="/admin/users" target="_blank">👤 View All Users</a></p>
+  <p><a href="/admin/matches" target="_blank">📊 View All Matches</a></p>
+  <p><a href="/admin/download-users" target="_blank">⬇️ Download Users CSV</a></p>
+  <p><a href="/admin/download-matches" target="_blank">⬇️ Download Matches CSV</a></p>
 </body>
 </html>

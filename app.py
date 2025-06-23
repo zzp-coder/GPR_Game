@@ -5,6 +5,8 @@ from werkzeug.security import check_password_hash
 import json, sqlite3, time, os
 import spacy
 from utils import split_sentences, load_pairs, get_next_paragraph, calculate_score
+import csv
+from flask import render_template_string, make_response
 
 app = Flask(__name__)
 app.secret_key = 'secret!'
@@ -164,6 +166,68 @@ def leaderboard():
     conn.close()
     return jsonify(data)
 
+@app.route("/admin/users")
+def admin_users():
+    conn = sqlite3.connect('db/game.db')
+    c = conn.cursor()
+    c.execute("SELECT id, username, role, total_score FROM users ORDER BY total_score DESC")
+    rows = c.fetchall()
+    conn.close()
+    html = "<h3>All Users</h3><table><tr><th>ID</th><th>Username</th><th>Role</th><th>Score</th></tr>"
+    for row in rows:
+        html += f"<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[2]}</td><td>{row[3]:.1f}</td></tr>"
+    html += "</table><a href='/admin'>Back to Admin</a>"
+    return render_template_string(html)
+
+@app.route("/admin/matches")
+def admin_matches():
+    conn = sqlite3.connect('db/game.db')
+    c = conn.cursor()
+    c.execute('''SELECT id, paragraph_id, player1, player2, selections_p1, selections_p2,
+                        is_match, score_p1, score_p2, duration_p1, duration_p2, timestamp
+                 FROM matches ORDER BY timestamp DESC''')
+    rows = c.fetchall()
+    conn.close()
+    html = "<h3>All Matches</h3><table><tr><th>ID</th><th>Paragraph</th><th>Player 1</th><th>Player 2</th><th>Selections P1</th><th>Selections P2</th><th>Match?</th><th>Score P1</th><th>Score P2</th><th>Dur P1</th><th>Dur P2</th><th>Time</th></tr>"
+    for row in rows:
+        html += f"<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[2]}</td><td>{row[3]}</td><td>{row[4]}</td><td>{row[5]}</td><td>{'✅' if row[6] else '❌'}</td><td>{row[7]}</td><td>{row[8]}</td><td>{row[9]}</td><td>{row[10]}</td><td>{row[11]}</td></tr>"
+    html += "</table><a href='/admin'>Back to Admin</a>"
+    return render_template_string(html)
+
+@app.route("/admin/download-users")
+def download_users_csv():
+    conn = sqlite3.connect('db/game.db')
+    c = conn.cursor()
+    c.execute("SELECT id, username, role, total_score FROM users")
+    rows = c.fetchall()
+    conn.close()
+
+    si = make_response()
+    writer = csv.writer(si)
+    writer.writerow(['ID', 'Username', 'Role', 'Score'])
+    writer.writerows(rows)
+    si.headers["Content-Disposition"] = "attachment; filename=users.csv"
+    si.headers["Content-type"] = "text/csv"
+    return si
+
+@app.route("/admin/download-matches")
+def download_matches_csv():
+    conn = sqlite3.connect('db/game.db')
+    c = conn.cursor()
+    c.execute('''SELECT id, paragraph_id, player1, player2, selections_p1, selections_p2,
+                        is_match, score_p1, score_p2, duration_p1, duration_p2, timestamp
+                 FROM matches''')
+    rows = c.fetchall()
+    conn.close()
+
+    si = make_response()
+    writer = csv.writer(si)
+    writer.writerow(['ID', 'Paragraph ID', 'Player 1', 'Player 2', 'Selections P1', 'Selections P2',
+                     'Is Match', 'Score P1', 'Score P2', 'Duration P1', 'Duration P2', 'Timestamp'])
+    writer.writerows(rows)
+    si.headers["Content-Disposition"] = "attachment; filename=matches.csv"
+    si.headers["Content-type"] = "text/csv"
+    return si
 #local:
 # if __name__ == '__main__':
 #     port = int(os.environ.get("PORT", 5001))
