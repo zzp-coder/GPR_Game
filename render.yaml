@@ -2,10 +2,11 @@ services:
   - type: web
     name: gpr-game
     env: python
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "chmod +x build.sh && ./build.sh"
     startCommand: "python app.py"
     envVars:
       - key: FLASK_ENV
         value: production
-    build:
-      pythonVersion: 3.11
+      - key: PORT
+        value: 5000
+    pythonVersion: "3.11"

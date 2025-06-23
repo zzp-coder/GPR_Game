@@ -3,5 +3,5 @@ flask-socketio
 eventlet
 werkzeug
 numpy
-https://files.pythonhosted.org/packages/4a/f5/f24d9adcecf209a0135c13e14e58e5a3c22889c8a5fda50d13d23c09ff7a/spacy-3.7.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+spacy>=3.7.0
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
