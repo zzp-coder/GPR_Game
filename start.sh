@@ -1,3 +1,3 @@
 #!/bin/bash
-python -m spacy validate  # 可选：验证模型是否正常
+python -m spacy download en_core_web_sm
 python app.py
