@@ -1,15 +1,13 @@
-# app.py
 import eventlet
 eventlet.monkey_patch()
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, session, jsonify, render_template_string, send_file
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import check_password_hash
-import json, sqlite3, time, os
+import json, sqlite3, time, os, io
 import spacy
 from utils import split_sentences, load_pairs, get_next_paragraph, calculate_score
-import csv
-from flask import render_template_string, Response
-import io
+
+DB_PATH = "/data/game.db"
 
 app = Flask(__name__)
 app.secret_key = 'secret!'
@@ -22,15 +20,15 @@ online_users = {}
 current_tasks = {}
 selections = {}
 confirmations = {}
-attempts = {}  # 新增：记录每个room的尝试次数
-attempt_logs = {}  # 新增：记录每次尝试的细节
+attempts = {}
+attempt_logs = {}
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        conn = sqlite3.connect('/data/game.db')
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute('SELECT password, role FROM users WHERE username=?', (username,))
         row = c.fetchone()
@@ -92,10 +90,9 @@ def handle_submit(data):
     if len(confirmations[room]) < 2:
         return
 
-    # 双方都提交
     p1, p2 = username, partner
     if p2 not in selections[room]:
-        return  # 避免错误
+        return
 
     s1 = set(selections[room][p1]['selected'])
     s2 = set(selections[room][p2]['selected'])
@@ -106,7 +103,6 @@ def handle_submit(data):
     is_match = s1 == s2
     attempts[room] += 1
 
-    # 添加到日志
     attempt_logs[room].append({
         'attempt': attempts[room],
         'selections': {
@@ -124,7 +120,7 @@ def handle_submit(data):
         score1 = calculate_score(len(s1), dur1)
         score2 = calculate_score(len(s2), dur2)
 
-        conn = sqlite3.connect('/data/game.db')
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         if is_match:
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score1, p1))
@@ -141,7 +137,6 @@ def handle_submit(data):
         conn.commit()
         conn.close()
 
-        # 进入下一个段落
         current_tasks[room] = get_next_paragraph(room)
         sentence_list = split_sentences(current_tasks[room]['text'])
         selections[room] = {}
@@ -154,7 +149,6 @@ def handle_submit(data):
             'sentences': sentence_list
         }, room=room)
     else:
-        # 匹配失败但还没到三次，通知失败，继续选
         socketio.emit('attempt_failed', {
             'remaining': 3 - attempts[room]
         }, room=room)
@@ -162,7 +156,7 @@ def handle_submit(data):
 
 @app.route('/leaderboard')
 def leaderboard():
-    conn = sqlite3.connect('/data/game.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('SELECT username, total_score FROM users WHERE role="player" ORDER BY total_score DESC')
     data = c.fetchall()
@@ -171,7 +165,7 @@ def leaderboard():
 
 @app.route("/admin/users")
 def admin_users():
-    conn = sqlite3.connect('/data/game.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("SELECT id, username, role, total_score FROM users ORDER BY total_score DESC")
     rows = c.fetchall()
@@ -184,7 +178,7 @@ def admin_users():
 
 @app.route("/admin/matches")
 def admin_matches():
-    conn = sqlite3.connect('/data/game.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''SELECT id, paragraph_id, player1, player2, selections_p1, selections_p2,
                         is_match, score_p1, score_p2, duration_p1, duration_p2, timestamp
@@ -198,48 +192,47 @@ def admin_matches():
     return render_template_string(html)
 
 @app.route("/admin/download-users")
-def download_users_csv():
-    conn = sqlite3.connect('/data/game.db')
+def download_users_json():
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("SELECT id, username, role, total_score FROM users")
     rows = c.fetchall()
     conn.close()
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['ID', 'Username', 'Role', 'Score'])
-    writer.writerows(rows)
-
-    response = Response(output.getvalue(), mimetype='text/csv')
-    response.headers["Content-Disposition"] = "attachment; filename=users.csv"
-    return response
+    return jsonify([
+        {"id": r[0], "username": r[1], "role": r[2], "score": r[3]} for r in rows
+    ])
 
 @app.route("/admin/download-matches")
-def download_matches_csv():
-    conn = sqlite3.connect('/data/game.db')
+def download_matches_json():
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''SELECT id, paragraph_id, player1, player2, selections_p1, selections_p2,
                         is_match, score_p1, score_p2, duration_p1, duration_p2, attempts_json, timestamp
-                 FROM matches''')  # 添加 attempts_json
+                 FROM matches''')
     rows = c.fetchall()
     conn.close()
+    return jsonify([
+        {
+            "id": r[0],
+            "paragraph_id": r[1],
+            "player1": r[2],
+            "player2": r[3],
+            "selections_p1": json.loads(r[4]),
+            "selections_p2": json.loads(r[5]),
+            "is_match": bool(r[6]),
+            "score_p1": r[7],
+            "score_p2": r[8],
+            "duration_p1": r[9],
+            "duration_p2": r[10],
+            "attempts": json.loads(r[11]),
+            "timestamp": r[12]
+        } for r in rows
+    ])
 
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['ID', 'Paragraph ID', 'Player 1', 'Player 2', 'Selections P1', 'Selections P2',
-                     'Is Match', 'Score P1', 'Score P2', 'Duration P1', 'Duration P2', 'Attempts JSON',
-                     'Timestamp'])  # 添加 Attempts JSON
-    writer.writerows(rows)
+@app.route("/admin/download-db")
+def download_db():
+    return send_file(DB_PATH, as_attachment=True, download_name="game.db")
 
-    response = Response(output.getvalue(), mimetype='text/csv')
-    response.headers["Content-Disposition"] = "attachment; filename=matches.csv"
-    return response
-#local:
-# if __name__ == '__main__':
-#     port = int(os.environ.get("PORT", 5001))
-#     socketio.run(app, debug=True, host="0.0.0.0", port=port, use_reloader=False)
-#
-#server:
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     socketio.run(app, debug=False, host="0.0.0.0", port=port)

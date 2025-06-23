@@ -1,14 +1,11 @@
+# init_db.py
 import sqlite3
-import os
 from werkzeug.security import generate_password_hash
 
-# 确保 /data 目录存在（Render 挂载点）
-os.makedirs("/data", exist_ok=True)
-
-conn = sqlite3.connect('/data/game.db')
+DB_PATH = "/data/game.db"
+conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
-# 重建表
 c.execute('DROP TABLE IF EXISTS users')
 c.execute('DROP TABLE IF EXISTS matches')
 
@@ -50,4 +47,4 @@ for u, p, r in users:
 
 conn.commit()
 conn.close()
-print("✅ Database initialized at /data/game.db")
+print("Database initialized at", DB_PATH)
