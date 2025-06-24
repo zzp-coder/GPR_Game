@@ -63,7 +63,25 @@ def handle_join(data):
     join_room(room)
 
     if room not in current_tasks:
-        current_tasks[room] = get_next_paragraph(room)
+        # 从 progress 表恢复段落
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT paragraph_index FROM progress WHERE room = ?", (room,))
+        row = c.fetchone()
+        conn.close()
+
+        if row:
+            # 从 JSON 文件中根据 paragraph_id 找段落
+            paragraph_id = row[0]
+            with open("paragraphs.json") as f:
+                data = json.load(f)
+                for p in data:
+                    if p["id"] == paragraph_id:
+                        current_tasks[room] = p
+                        break
+        else:
+            current_tasks[room] = get_next_paragraph(room)
+
         attempts[room] = 0
         attempt_logs[room] = []
 
@@ -138,6 +156,13 @@ def handle_submit(data):
         conn.close()
 
         current_tasks[room] = get_next_paragraph(room)
+        # 更新 progress 表
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO progress (room, paragraph_index) VALUES (?, ?)",
+                  (room, current_tasks[room]['id']))
+        conn.commit()
+        conn.close()
         sentence_list = split_sentences(current_tasks[room]['text'])
         selections[room] = {}
         confirmations[room] = set()
