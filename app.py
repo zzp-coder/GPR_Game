@@ -64,7 +64,7 @@ def handle_join(data):
 
     if room not in current_tasks:
         index = get_or_create_progress(room)
-        current_tasks[room] = get_paragraph_by_index(index)
+        current_tasks[room] = get_paragraph_by_index(room, index)
         attempts[room] = 0
         attempt_logs[room] = []
 
