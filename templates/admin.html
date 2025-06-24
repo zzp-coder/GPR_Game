@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Panel</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    table { border-collapse: collapse; margin-bottom: 30px; }
-    th, td { border: 1px solid #ccc; padding: 6px 12px; }
-    th { background-color: #f0f0f0; }
-    a { color: #007bff; text-decoration: none; margin-right: 10px; }
-  </style>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
 </head>
 <body>
-  <h2>Admin Dashboard</h2>
-  <p><a href="/leaderboard" target="_blank">🔢 View Leaderboard (JSON)</a></p>
-  <p><a href="/admin/users" target="_blank">👤 View All Users</a></p>
-  <p><a href="/admin/matches" target="_blank">📊 View All Matches</a></p>
-  <p><a href="/admin/download-users" target="_blank">⬇️ Download Users CSV</a></p>
-  <p><a href="/admin/download-matches" target="_blank">⬇️ Download Matches CSV</a></p>
-  <p><a href="/admin/download-db" download>Download Raw Database (.db)</a></p>
+  <section class="section">
+    <div class="container">
+      <h2 class="title is-4">🛠 Admin Dashboard</h2>
+      <div class="buttons">
+        <a class="button is-info" href="/leaderboard" target="_blank">🔢 View Leaderboard (JSON)</a>
+        <a class="button is-primary" href="/admin/users" target="_blank">👤 View All Users</a>
+        <a class="button is-warning" href="/admin/matches" target="_blank">📊 View All Matches</a>
+        <a class="button is-link" href="/admin/download-users" target="_blank">⬇️ Download Users CSV</a>
+        <a class="button is-link" href="/admin/download-matches" target="_blank">⬇️ Download Matches CSV</a>
+        <a class="button is-danger" href="/admin/download-db" download>📥 Download Raw DB</a>
+      </div>
+    </div>
+  </section>
 </body>
 </html>

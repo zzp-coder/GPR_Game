@@ -1,12 +1,39 @@
 <!DOCTYPE html>
 <html>
-<head><title>Login</title></head>
+<head>
+  <title>Login</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
 <body>
-  <h2>Login</h2>
-  <form method="POST">
-    Username: <input name="username"><br>
-    Password: <input type="password" name="password"><br>
-    <input type="submit" value="Login">
-  </form>
+  <section class="section">
+    <div class="container">
+      <div class="column is-half is-offset-one-quarter">
+        <div class="box">
+          <h1 class="title is-4 has-text-centered">Login</h1>
+          <form method="POST">
+            <div class="field">
+              <label class="label">Username</label>
+              <div class="control">
+                <input class="input" type="text" name="username" required>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label">Password</label>
+              <div class="control">
+                <input class="input" type="password" name="password" required>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="control">
+                <button class="button is-primary is-fullwidth">Login</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
 </body>
 </html>

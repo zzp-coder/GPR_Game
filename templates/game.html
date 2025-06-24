@@ -5,90 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
   <script src="/static/main.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #e3f2fd, #fce4ec);
-      padding: 20px;
-      color: #333;
-    }
-    h2 {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 20px;
-      color: #37474f;
-    }
-    .game-box {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-width: 800px;
-      margin: 0 auto;
-    }
     .sentence {
-  cursor: pointer;
-  padding: 5px 8px;          /* 增大点击区域 */
-  display: inline;     /* 改为inline-block，块级特性更好响应点击 */
-  border-radius: 4px;
-  transition: background-color 0.2s;
-  user-select: none;         /* 防止文字选中影响点击体验 */
-}
+      cursor: pointer;
+      padding: 4px 6px;
+      display: inline-block;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+      user-select: none;
+    }
 
-.sentence:hover {
-  background-color: #e0f7fa;
-}
+    .sentence:hover {
+      background-color: #f0f0f0;
+    }
 
-.selected {
-  background-color: #ffeb3b !important; /* 强制覆盖，保证点击立即高亮 */
-}
+    .selected {
+      background-color: #ffe082 !important;
+    }
+
     #paragraph-box {
       line-height: 1.8;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #29b6f6;
-      color: white;
-      font-weight: bold;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0288d1;
-    }
-    #leaderboard {
-      margin-top: 30px;
-    }
-    .leader-item {
-      margin-bottom: 10px;
-    }
-    #status {
-      font-family: 'Courier New', monospace; /* 使用等宽字体以区分段落内容 */
-      font-size: 16px;
-      font-weight: bold;
-      color: #6a1b9a; /* 深紫色强调 */
-      margin-bottom: 10px;
-      background-color: #f3e5f5; /* 淡紫色背景 */
-      padding: 8px 12px;
-      border-left: 4px solid #ab47bc; /* 强调左边线 */
-      border-radius: 6px;
+      margin-bottom: 1.5rem;
     }
   </style>
 </head>
 <body>
-  <div class="game-box">
-    <h2>Text Annotation Battle - Welcome, {{ username }}</h2>
-    <div id="paragraph-box"></div>
+  <section class="section">
+    <div class="container">
+      <div class="box">
+        <h2 class="title is-4">👋 Welcome, {{ username }}</h2>
+        <div id="paragraph-box" class="content"></div>
 
-    <!-- ✅ 把 status 提前 -->
-    <p id="status">Waiting for task...</p>
-    <button onclick="submitSelection()">✅ Confirm Selection</button>
-    <h3>Leaderboard</h3>
-    <div id="leaderboard"></div>
-</div>
+        <div id="status" class="notification is-info is-light">Waiting for task...</div>
+
+        <button class="button is-link" onclick="submitSelection()">✅ Confirm Selection</button>
+
+        <hr>
+        <h3 class="title is-5">🏆 Leaderboard</h3>
+        <div id="leaderboard" class="content"></div>
+      </div>
+    </div>
+  </section>
 
   <script>
     const username = "{{ username }}";
