@@ -1,6 +1,7 @@
 import sqlite3
 from werkzeug.security import generate_password_hash
 import os
+import json
 from config import DB_PATH
 
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -41,21 +42,24 @@ c.execute('''CREATE TABLE IF NOT EXISTS progress (
     paragraph_index INTEGER
 )''')
 
-# 从环境变量读初始密码，没有则用默认值
-def getenv_or_default(key, default):
-    return os.environ.get(key, default)
+# 从环境变量读取 JSON 格式的用户名密码字典
+users_json = os.getenv('USER_CREDENTIALS_JSON', '{}')
+admin_pass = os.getenv('ADMIN_PASSWORD', 'admin')
 
-users = [
-    ('alice', getenv_or_default('ALICE_PASS', '1234'), 'player'),
-    ('bob', getenv_or_default('BOB_PASS', '1234'), 'player'),
-    ('carol', getenv_or_default('CAROL_PASS', '1234'), 'player'),
-    ('dave', getenv_or_default('DAVE_PASS', '1234'), 'player'),
-    ('admin', getenv_or_default('ADMIN_PASS', 'admin'), 'admin')
-]
+try:
+    user_dict = json.loads(users_json)
+except json.JSONDecodeError:
+    print("⚠️ USER_CREDENTIALS_JSON 格式错误，将不会添加用户")
+    user_dict = {}
 
-for u, p, r in users:
+# 插入普通用户
+for username, password in user_dict.items():
     c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
-              (u, generate_password_hash(p), r))
+              (username, generate_password_hash(password), 'player'))
+
+# 插入管理员
+c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
+          ("admin", generate_password_hash(admin_pass), 'admin'))
 
 conn.commit()
 conn.close()
