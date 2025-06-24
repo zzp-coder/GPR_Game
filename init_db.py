@@ -1,20 +1,17 @@
-# init_db.py
 import sqlite3
 from werkzeug.security import generate_password_hash
 import os
+from config import DB_PATH
 
-DB_PATH = "/data/game.db"
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
-# 清空旧表（可选）
 c.execute('DROP TABLE IF EXISTS users')
 c.execute('DROP TABLE IF EXISTS matches')
 c.execute('DROP TABLE IF EXISTS progress')
 
-# 用户表
 c.execute('''CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
     username TEXT UNIQUE,
@@ -23,7 +20,6 @@ c.execute('''CREATE TABLE IF NOT EXISTS users (
     total_score REAL DEFAULT 0
 )''')
 
-# 匹配记录表
 c.execute('''CREATE TABLE IF NOT EXISTS matches (
     id INTEGER PRIMARY KEY,
     paragraph_id INTEGER,
@@ -40,19 +36,23 @@ c.execute('''CREATE TABLE IF NOT EXISTS matches (
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )''')
 
-# 新增：记录每个房间的段落进度
 c.execute('''CREATE TABLE IF NOT EXISTS progress (
     room TEXT PRIMARY KEY,
     paragraph_index INTEGER
 )''')
 
-# 初始用户
+# 从环境变量读初始密码，没有则用默认值
+import os
+
+def getenv_or_default(key, default):
+    return os.environ.get(key, default)
+
 users = [
-    ('alice', '1234', 'player'),
-    ('bob', '1234', 'player'),
-    ('carol', '1234', 'player'),
-    ('dave', '1234', 'player'),
-    ('admin', 'admin', 'admin')
+    ('alice', getenv_or_default('ALICE_PASS', '1234'), 'player'),
+    ('bob', getenv_or_default('BOB_PASS', '1234'), 'player'),
+    ('carol', getenv_or_default('CAROL_PASS', '1234'), 'player'),
+    ('dave', getenv_or_default('DAVE_PASS', '1234'), 'player'),
+    ('admin', getenv_or_default('ADMIN_PASS', 'admin'), 'admin')
 ]
 
 for u, p, r in users:

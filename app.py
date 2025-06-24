@@ -5,9 +5,9 @@ from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import check_password_hash
 import json, sqlite3, time, os, io
 import spacy
-from utils import split_sentences, load_pairs, get_next_paragraph, calculate_score
-
-DB_PATH = "/data/game.db"
+from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, calculate_score, \
+    advance_progress
+from config import DB_PATH
 
 app = Flask(__name__)
 app.secret_key = 'secret!'
@@ -63,25 +63,8 @@ def handle_join(data):
     join_room(room)
 
     if room not in current_tasks:
-        # 从 progress 表恢复段落
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT paragraph_index FROM progress WHERE room = ?", (room,))
-        row = c.fetchone()
-        conn.close()
-
-        if row:
-            # 从 JSON 文件中根据 paragraph_id 找段落
-            paragraph_id = row[0]
-            with open("paragraphs.json") as f:
-                data = json.load(f)
-                for p in data:
-                    if p["id"] == paragraph_id:
-                        current_tasks[room] = p
-                        break
-        else:
-            current_tasks[room] = get_next_paragraph(room)
-
+        index = get_or_create_progress(room)
+        current_tasks[room] = get_paragraph_by_index(index)
         attempts[room] = 0
         attempt_logs[room] = []
 
@@ -155,14 +138,7 @@ def handle_submit(data):
         conn.commit()
         conn.close()
 
-        current_tasks[room] = get_next_paragraph(room)
-        # 更新 progress 表
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("INSERT OR REPLACE INTO progress (room, paragraph_index) VALUES (?, ?)",
-                  (room, current_tasks[room]['id']))
-        conn.commit()
-        conn.close()
+        current_tasks[room] = advance_progress(room)
         sentence_list = split_sentences(current_tasks[room]['text'])
         selections[room] = {}
         confirmations[room] = set()
@@ -259,5 +235,5 @@ def download_db():
     return send_file(DB_PATH, as_attachment=True, download_name="game.db")
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
     socketio.run(app, debug=False, host="0.0.0.0", port=port)

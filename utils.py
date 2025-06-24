@@ -2,7 +2,7 @@
 import json, sqlite3
 import spacy
 nlp = spacy.load("en_core_web_sm")
-DB_PATH = "/data/game.db"
+from config import DB_PATH
 
 with open("data/paragraphs.json") as f:
     all_paragraphs = json.load(f)
@@ -18,34 +18,36 @@ def split_sentences(paragraph_text):
     return [sent.text.strip() for sent in doc.sents]
 
 
-def get_next_paragraph(room):
+def get_paragraph_by_index(index):
     with open('data/paragraphs.json', 'r') as f:
         paragraphs = json.load(f)
 
+    if index >= len(paragraphs):
+        return {'id': -1, 'text': 'No more paragraphs.'}
+
+    return {
+        'id': paragraphs[index]['id'],
+        'text': paragraphs[index]['text']
+    }
+
+
+def get_or_create_progress(room):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('SELECT paragraph_index FROM progress WHERE room = ?', (room,))
     row = c.fetchone()
+    conn.close()
+    return row[0] if row else 0
 
-    if row:
-        index = row[0] + 1
-    else:
-        index = 0
 
-    if index >= len(paragraphs):
-        conn.close()
-        return {'id': -1, 'text': 'No more paragraphs.'}
-
-    # 更新段落进度
+def advance_progress(room):
+    index = get_or_create_progress(room) + 1
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
     c.execute('INSERT OR REPLACE INTO progress (room, paragraph_index) VALUES (?, ?)', (room, index))
     conn.commit()
     conn.close()
-
-    paragraph = paragraphs[index]
-    return {
-        'id': paragraph['id'],
-        'text': paragraph['text']
-    }
+    return get_paragraph_by_index(index)
 
 def calculate_score(num_sentences, duration):
     base = num_sentences
