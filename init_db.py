@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 import os
 import json
 from config import DB_PATH
-
+print("🛠 Running init_db.py to initialize database...")
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 conn = sqlite3.connect(DB_PATH)
