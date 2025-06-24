@@ -42,8 +42,6 @@ c.execute('''CREATE TABLE IF NOT EXISTS progress (
 )''')
 
 # 从环境变量读初始密码，没有则用默认值
-import os
-
 def getenv_or_default(key, default):
     return os.environ.get(key, default)
 
