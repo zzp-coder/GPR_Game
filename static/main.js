@@ -26,7 +26,7 @@ function startSocket(username) {
       box.appendChild(span);
       box.appendChild(document.createTextNode(" "));
     });
-    document.getElementById("status").innerText = "Waiting for your selection...";
+    document.getElementById("status").innerText = "🟡 Waiting for your selection...";
   });
 
   // ✅ 新增：响应匹配失败事件
@@ -46,7 +46,7 @@ function submitSelection() {
     selected: Array.from(selected),
     start_time
   });
-  document.getElementById("status").innerText = "Waiting for partner to confirm...";
+  document.getElementById("status").innerText = "⏳ Waiting for partner to confirm...";
 }
 
 function updateLeaderboard() {
