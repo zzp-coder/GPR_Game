@@ -1,6 +1,6 @@
 import eventlet
 eventlet.monkey_patch()
-from flask import Flask, render_template, request, redirect, session, jsonify, render_template_string, send_file
+from flask import Flask, render_template, request, redirect, session, jsonify, render_template_string, send_file, render_template
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import check_password_hash
 import json, sqlite3, time, os, io
@@ -69,11 +69,14 @@ def handle_join(data):
         attempt_logs[room] = []
 
     paragraph = current_tasks[room]
-    sentence_list = split_sentences(paragraph['text'])
-    socketio.emit('start_task', {
-        'paragraph': paragraph,
-        'sentences': sentence_list
-    }, room=room)
+    if paragraph['id'] == -1:
+        socketio.emit('start_task', {'done': True}, room=room)
+    else:
+        sentence_list = split_sentences(paragraph['text'])
+        socketio.emit('start_task', {
+            'paragraph': paragraph,
+            'sentences': sentence_list
+        }, room=room)
 
 @socketio.on('submit_selection')
 def handle_submit(data):
@@ -106,14 +109,8 @@ def handle_submit(data):
 
     attempt_logs[room].append({
         'attempt': attempts[room],
-        'selections': {
-            p1: list(s1),
-            p2: list(s2)
-        },
-        'durations': {
-            p1: dur1,
-            p2: dur2
-        },
+        'selections': {p1: list(s1), p2: list(s2)},
+        'durations': {p1: dur1, p2: dur2},
         'match': is_match
     })
 
@@ -139,21 +136,28 @@ def handle_submit(data):
         conn.close()
 
         current_tasks[room] = advance_progress(room)
-        sentence_list = split_sentences(current_tasks[room]['text'])
-        selections[room] = {}
-        confirmations[room] = set()
-        attempts[room] = 0
-        attempt_logs[room] = []
+        if current_tasks[room]['id'] == -1:
+            socketio.emit('start_task', {'done': True}, room=room)
+        else:
+            sentence_list = split_sentences(current_tasks[room]['text'])
+            selections[room] = {}
+            confirmations[room] = set()
+            attempts[room] = 0
+            attempt_logs[room] = []
 
-        socketio.emit('start_task', {
-            'paragraph': current_tasks[room],
-            'sentences': sentence_list
-        }, room=room)
+            socketio.emit('start_task', {
+                'paragraph': current_tasks[room],
+                'sentences': sentence_list
+            }, room=room)
     else:
         socketio.emit('attempt_failed', {
             'remaining': 3 - attempts[room]
         }, room=room)
         confirmations[room] = set()
+
+@app.route("/game-finished")
+def game_finished():
+    return render_template("success.html")
 
 @app.route('/leaderboard')
 def leaderboard():

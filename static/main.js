@@ -7,6 +7,11 @@ function startSocket(username) {
   socket.emit("join", { username });
 
   socket.on("start_task", data => {
+    if (data.done) {
+      window.location.href = "/game-finished";
+      return;
+    }
+
     start_time = Date.now() / 1000;
     const box = document.getElementById("paragraph-box");
     box.innerHTML = "";
