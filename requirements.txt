@@ -4,3 +4,4 @@ eventlet
 werkzeug
 numpy
 spacy
+python-dotenv
