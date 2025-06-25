@@ -8,6 +8,7 @@ import spacy
 from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, calculate_score, \
     advance_progress
 from config import DB_PATH
+import shutil
 
 app = Flask(__name__)
 app.secret_key = 'secret!'
@@ -237,6 +238,38 @@ def download_matches_json():
 @app.route("/admin/download-db")
 def download_db():
     return send_file(DB_PATH, as_attachment=True, download_name="game.db")
+
+@app.route("/admin/reset-db", methods=["GET", "POST"])
+def admin_reset_db():
+    if session.get('role') != 'admin':
+        return redirect('/')
+
+    if request.method == "POST":
+        # 备份旧数据库
+        if os.path.exists(DB_PATH):
+            shutil.copy(DB_PATH, DB_PATH + ".bak")
+
+        # 删除旧数据库
+        if os.path.exists(DB_PATH):
+            os.remove(DB_PATH)
+
+        # 重新初始化
+        os.system("python3 init_db.py")
+
+        return render_template_string("""
+        <h3>✅ 数据库已重置</h3>
+        <p>旧数据库已备份为 <code>game.db.bak</code></p>
+        <p><a href='/admin'>返回 Admin 面板</a></p>
+        """)
+
+    return render_template_string("""
+    <h3>⚠️ 确认要重置数据库？</h3>
+    <p>这将删除所有用户数据、得分和配对记录。</p>
+    <form method="post">
+        <button type="submit">🧨 确认重置数据库</button>
+        <a href="/admin">取消</a>
+    </form>
+    """)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
