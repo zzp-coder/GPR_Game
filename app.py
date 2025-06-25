@@ -53,6 +53,14 @@ def admin():
         return redirect('/')
     return render_template('admin.html')
 
+@app.route('/admin/online')
+def admin_online():
+    html = "<h3>Online Users</h3><table><tr><th>Username</th><th>Socket ID</th></tr>"
+    for u, sid in online_users.items():
+        html += f"<tr><td>{u}</td><td>{sid}</td></tr>"
+    html += "</table><a href='/admin'>Back to Admin</a>"
+    return render_template_string(html)
+
 @socketio.on('join')
 def handle_join(data):
     username = data['username']
@@ -62,6 +70,10 @@ def handle_join(data):
         return
     room = f'{username}_{partner}' if username < partner else f'{partner}_{username}'
     join_room(room)
+
+    if partner not in online_users:
+        socketio.emit('waiting_partner', {}, to=request.sid)
+        return
 
     if room not in current_tasks:
         index = get_or_create_progress(room)
@@ -245,15 +257,12 @@ def admin_reset_db():
         return redirect('/')
 
     if request.method == "POST":
-        # 备份旧数据库
         if os.path.exists(DB_PATH):
             shutil.copy(DB_PATH, DB_PATH + ".bak")
 
-        # 删除旧数据库
         if os.path.exists(DB_PATH):
             os.remove(DB_PATH)
 
-        # 重新初始化
         os.system("python3 init_db.py")
 
         return render_template_string("""

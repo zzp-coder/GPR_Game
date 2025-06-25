@@ -34,7 +34,12 @@ function startSocket(username) {
     document.getElementById("status").innerText = "🟡 Waiting for your selection...";
   });
 
-  // ✅ 新增：响应匹配失败事件
+  // 新增：伙伴未上线时的等待状态
+  socket.on("waiting_partner", () => {
+    document.getElementById("status").innerText = "⏳ Waiting for your partner to come online...";
+  });
+
+  // 匹配失败的提示
   socket.on("attempt_failed", data => {
     const msg = `Selections do not match! You have ${data.remaining} attempt(s) left.`;
     document.getElementById("status").innerText = msg;
