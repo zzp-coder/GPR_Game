@@ -280,6 +280,10 @@ def admin_reset_db():
     </form>
     """)
 
+@app.route("/how-to-play")
+def how_to_play():
+    return render_template("how_to_play.html")
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
     socketio.run(app, debug=False, host="0.0.0.0", port=port)

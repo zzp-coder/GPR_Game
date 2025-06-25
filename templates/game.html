@@ -1,3 +1,4 @@
+<!-- templates/game.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -35,11 +36,16 @@
     <div class="container">
       <div class="box">
         <h2 class="title is-4">👋 Welcome, {{ username }}</h2>
-        <div id="paragraph-box" class="content"></div>
 
-        <div id="status" class="notification is-info is-light">
-          Waiting for task or your partner to come online...
+        <!-- 🔰 新增说明部分 -->
+        <div class="notification is-light">
+          📘 <strong>How to play:</strong> Select sentences that express geopolitical risks.
+          Once both you and your partner confirm the same selection, you earn points together.
+          <a href="/how-to-play" target="_blank">Learn more</a>
         </div>
+
+        <div id="paragraph-box" class="content"></div>
+        <div id="status" class="notification is-info is-light">Waiting for task...</div>
 
         <button class="button is-link" onclick="submitSelection()">✅ Confirm Selection</button>
 
