@@ -75,7 +75,7 @@ function updateLeaderboard() {
         container.style.margin = "5px 0";
 
         const label = document.createElement("div");
-        label.textContent = `${user}: ${score.toFixed(1)}`;
+        label.textContent = `${user}: ${score.toFixed(5)}`;
 
         const bar = document.createElement("div");
         bar.style.height = "20px";
