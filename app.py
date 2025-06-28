@@ -5,8 +5,7 @@ from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import check_password_hash
 import json, sqlite3, time, os, io
 import spacy
-from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, calculate_score, \
-    advance_progress, calculate_relative_score
+from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, advance_progress, calculate_relative_score
 from config import DB_PATH
 import shutil
 
