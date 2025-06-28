@@ -55,7 +55,10 @@ def advance_progress(room):
     conn.close()
     return get_paragraph_by_index(room, index)
 
-def calculate_score(num_sentences, duration):
-    base = num_sentences
-    time_factor = 1 + max(0, (60 - duration) / 60)
-    return round(base * time_factor, 2)
+def calculate_relative_score(duration1, duration2):
+    total = duration1 + duration2
+    if total == 0:
+        return 0.5, 0.5  # 平分
+    score1 = duration2 / total
+    score2 = duration1 / total
+    return round(score1, 4), round(score2, 4)

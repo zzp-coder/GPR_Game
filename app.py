@@ -6,7 +6,7 @@ from werkzeug.security import check_password_hash
 import json, sqlite3, time, os, io
 import spacy
 from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, calculate_score, \
-    advance_progress
+    advance_progress, calculate_relative_score
 from config import DB_PATH
 import shutil
 
@@ -128,15 +128,12 @@ def handle_submit(data):
     })
 
     if is_match or attempts[room] >= 3:
-        score1 = calculate_score(len(s1), dur1)
-        score2 = calculate_score(len(s2), dur2)
-
+        score1, score2 = calculate_relative_score(dur1, dur2)
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         if is_match:
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score1, p1))
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score2, p2))
-
         c.execute('''INSERT INTO matches
                      (paragraph_id, player1, player2, is_match, selections_p1, selections_p2,
                       score_p1, score_p2, duration_p1, duration_p2, attempts_json)
