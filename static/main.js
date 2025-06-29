@@ -58,10 +58,34 @@ function startSocket(username) {
   });
 
   socket.on("pause_started", data => {
-    pause_end_time = Date.now() / 1000 + data.seconds;
-    const pauseDiv = document.getElementById("pause-status");
-    pauseDiv.style.display = "block";
-    countdown(pause_end_time);
+    const seconds = data.seconds;
+    const pauseStatus = document.getElementById("pause-status");
+    const confirmButton = document.querySelector("button.is-link");
+
+    let remaining = seconds;
+
+    if (pauseStatus) {
+      pauseStatus.style.display = "block";
+      pauseStatus.innerText = `⏸️ Game paused. Resumes in ${remaining} seconds.`;
+    }
+
+    // 禁用“确认”按钮和句子点击
+    if (confirmButton) confirmButton.disabled = true;
+    document.querySelectorAll(".sentence").forEach(span => span.style.pointerEvents = "none");
+
+    const interval = setInterval(() => {
+      remaining -= 1;
+      if (pauseStatus) {
+        pauseStatus.innerText = `⏸️ Game paused. Resumes in ${remaining} seconds.`;
+      }
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        if (pauseStatus) pauseStatus.style.display = "none";
+        if (confirmButton) confirmButton.disabled = false;
+        document.querySelectorAll(".sentence").forEach(span => span.style.pointerEvents = "auto");
+      }
+    }, 1000);
   });
 
   updateLeaderboard();
@@ -109,9 +133,10 @@ function updateLeaderboard() {
 }
 
 function pauseGame() {
-  const min = parseInt(prompt("Enter number of minutes to pause:"));
-  if (!min || min <= 0) return;
-  socket.emit("pause_request", { minutes: min });
+  const minutes = prompt("Pause for how many minutes?", "1");
+  if (minutes && !isNaN(minutes) && parseInt(minutes) > 0) {
+    socket.emit("pause_request", { minutes: parseInt(minutes) });
+  }
 }
 
 function countdown(endTime) {
