@@ -179,6 +179,18 @@ def handle_submit(data):
         }, room=room)
         confirmations[room] = set()
 
+@socketio.on('pause_request')
+def handle_pause_request(data):
+    minutes = data.get('minutes', 1)
+    seconds = minutes * 60
+    username = [u for u, sid in online_users.items() if sid == request.sid][0]
+    partner = pairs.get(username)
+    if not partner:
+        return
+
+    room = f'{username}_{partner}' if username < partner else f'{partner}_{username}'
+    socketio.emit('pause_started', {'seconds': seconds}, room=room)
+
 @app.route("/game-finished")
 def game_finished():
     return render_template("success.html")

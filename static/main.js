@@ -1,12 +1,17 @@
+// ✅ main.js - 增加暂停功能逻辑
 let socket;
 let selected = new Set();
 let start_time;
+let pause_end_time = 0;  // 前端倒计时
 
 function startSocket(username) {
   socket = io();
   socket.emit("join", { username });
 
   socket.on("start_task", data => {
+    // 若处于暂停中，则不更新任务
+    if (Date.now() / 1000 < pause_end_time) return;
+
     if (data.done) {
       window.location.href = "/game-finished";
       return;
@@ -17,13 +22,8 @@ function startSocket(username) {
     // ✅ 更新进度条
     const idx = data.current_index || 0;
     const total = data.total || 1;
-    const progressStatus = document.getElementById("progress-status");
-    const progressBar = document.getElementById("progress-bar");
-    if (progressStatus && progressBar) {
-      progressStatus.innerText = `📘 Progress: ${idx} / ${total}`;
-      const percent = Math.round((idx / total) * 100);
-      progressBar.value = percent;
-    }
+    document.getElementById("progress-status").innerText = `📘 Progress: ${idx} / ${total}`;
+    document.getElementById("progress-bar").value = Math.round((idx / total) * 100);
 
     // ✅ 显示段落内容
     const box = document.getElementById("paragraph-box");
@@ -47,16 +47,21 @@ function startSocket(username) {
     document.getElementById("status").innerText = "🟡 Waiting for your selection...";
   });
 
-  // 伙伴未上线
   socket.on("waiting_partner", () => {
     document.getElementById("status").innerText = "⏳ Waiting for your partner to come online...";
   });
 
-  // 匹配失败提醒
   socket.on("attempt_failed", data => {
     const msg = `Selections do not match! You have ${data.remaining} attempt(s) left.`;
     document.getElementById("status").innerText = msg;
     alert(msg);
+  });
+
+  socket.on("pause_started", data => {
+    pause_end_time = Date.now() / 1000 + data.seconds;
+    const pauseDiv = document.getElementById("pause-status");
+    pauseDiv.style.display = "block";
+    countdown(pause_end_time);
   });
 
   updateLeaderboard();
@@ -80,7 +85,6 @@ function updateLeaderboard() {
       board.innerHTML = "";
       const maxScore = Math.max(...data.map(d => d[1]), 1);
       const displayMax = maxScore * 1.2;
-
       const colors = ["#4caf50", "#2196f3", "#ff9800", "#e91e63", "#9c27b0"];
 
       data.forEach(([user, score], i) => {
@@ -102,4 +106,21 @@ function updateLeaderboard() {
         board.appendChild(container);
       });
     });
+}
+
+function pauseGame() {
+  const min = parseInt(prompt("Enter number of minutes to pause:"));
+  if (!min || min <= 0) return;
+  socket.emit("pause_request", { minutes: min });
+}
+
+function countdown(endTime) {
+  const el = document.getElementById("pause-status");
+  function update() {
+    const remaining = Math.max(0, Math.floor(endTime - Date.now() / 1000));
+    el.innerText = `⏸️ Game paused. Resumes in ${remaining}s.`;
+    if (remaining > 0) setTimeout(update, 1000);
+    else el.style.display = "none";
+  }
+  update();
 }
