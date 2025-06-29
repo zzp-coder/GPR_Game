@@ -13,6 +13,19 @@ function startSocket(username) {
     }
 
     start_time = Date.now() / 1000;
+
+    // ✅ 更新进度条
+    const idx = data.current_index || 0;
+    const total = data.total || 1;
+    const progressStatus = document.getElementById("progress-status");
+    const progressBar = document.getElementById("progress-bar");
+    if (progressStatus && progressBar) {
+      progressStatus.innerText = `📘 Progress: ${idx} / ${total}`;
+      const percent = Math.round((idx / total) * 100);
+      progressBar.value = percent;
+    }
+
+    // ✅ 显示段落内容
     const box = document.getElementById("paragraph-box");
     box.innerHTML = "";
     selected.clear();
@@ -32,23 +45,14 @@ function startSocket(username) {
       box.appendChild(document.createTextNode(" "));
     });
     document.getElementById("status").innerText = "🟡 Waiting for your selection...";
-
-    // 更新进度条
-    if (data.total && data.current_index) {
-      document.getElementById("progress-status").innerText =
-        `📘 Progress: ${data.current_index} / ${data.total}`;
-
-      const percent = Math.floor((data.current_index / data.total) * 100);
-      document.getElementById("progress-bar").value = percent;
-    }
   });
 
-  // 新增：伙伴未上线时的等待状态
+  // 伙伴未上线
   socket.on("waiting_partner", () => {
     document.getElementById("status").innerText = "⏳ Waiting for your partner to come online...";
   });
 
-  // 匹配失败的提示
+  // 匹配失败提醒
   socket.on("attempt_failed", data => {
     const msg = `Selections do not match! You have ${data.remaining} attempt(s) left.`;
     document.getElementById("status").innerText = msg;

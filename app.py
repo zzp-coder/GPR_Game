@@ -5,7 +5,8 @@ from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import check_password_hash
 import json, sqlite3, time, os, io
 import spacy
-from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, advance_progress, calculate_relative_score
+from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, advance_progress, \
+    calculate_relative_score, get_total_paragraphs
 from config import DB_PATH
 import shutil
 
@@ -74,6 +75,7 @@ def handle_join(data):
         socketio.emit('waiting_partner', {}, to=request.sid)
         return
 
+    total = get_total_paragraphs()
     if room not in current_tasks:
         index = get_or_create_progress(room)
         current_tasks[room] = get_paragraph_by_index(room, index)
@@ -89,7 +91,7 @@ def handle_join(data):
         socketio.emit('start_task', {
             'paragraph': paragraph,
             'sentences': sentence_list,
-            'total': 1000,
+            'total': total,
             'current_index': index
         }, room=room)
 
@@ -164,10 +166,11 @@ def handle_submit(data):
             attempts[room] = 0
             attempt_logs[room] = []
             index = get_or_create_progress(room)
+            total = get_total_paragraphs()
             socketio.emit('start_task', {
                 'paragraph': current_tasks[room],
                 'sentences': sentence_list,
-                'total': 1000,
+                'total': total,
                 'current_index': index
             }, room=room)
     else:

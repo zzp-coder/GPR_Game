@@ -29,6 +29,28 @@
       line-height: 1.8;
       margin-bottom: 1.5rem;
     }
+
+    #progress-bar {
+      width: 100%;
+      height: 20px;
+      appearance: none;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #eee;
+      margin-top: 6px;
+    }
+
+    #progress-bar::-webkit-progress-bar {
+      background-color: #eee;
+    }
+
+    #progress-bar::-webkit-progress-value {
+      background-color: #00d1b2;
+    }
+
+    #progress-bar::-moz-progress-bar {
+      background-color: #00d1b2;
+    }
   </style>
 </head>
 <body>
@@ -37,18 +59,22 @@
       <div class="box">
         <h2 class="title is-4">👋 Welcome, {{ username }}</h2>
 
-        <!-- 🔰 新增说明部分 -->
+        <!-- 玩法说明 -->
         <div class="notification is-light">
           📘 <strong>How to play:</strong> Select sentences that express geopolitical risks.
           Once both you and your partner confirm the same selection, you earn points together.
           <a href="/how-to-play" target="_blank">Learn more</a>
         </div>
 
-        <div id="paragraph-box" class="content"></div>
-        <div class="box">
-          <progress id="progress-bar" class="progress is-info" value="0" max="100"></progress>
-          <div id="progress-status" class="has-text-centered">📘 Progress: 0 / 0</div>
+        <!-- 🔄 新增：进度条显示 -->
+        <div id="progressContainer" style="margin-bottom: 10px;">
+          <div id="progress-status" style="margin-bottom: 5px; font-weight: bold; text-align: right;">
+            Progress: 0 / 0
+          </div>
+          <progress id="progress-bar" value="0" max="100"></progress>
         </div>
+
+        <div id="paragraph-box" class="content"></div>
         <div id="status" class="notification is-info is-light">Waiting for task...</div>
 
         <button class="button is-link" onclick="submitSelection()">✅ Confirm Selection</button>

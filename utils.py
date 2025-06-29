@@ -63,5 +63,15 @@ def calculate_relative_score(duration1, duration2):
     score2 = duration1 / total
     return round(score1, 4), round(score2, 4)
 
-def get_total_paragraphs(room):
-    return len(get_paragraphs_for_room(room))
+def get_total_paragraphs():
+    paragraphs = []
+    data_folder = os.path.join(os.path.dirname(__file__), "data")
+    for fname in os.listdir(data_folder):
+        path = os.path.join(data_folder, fname)
+        if not os.path.isfile(path):
+            continue
+        with open(path, encoding="utf-8") as f:
+            raw = f.read()
+            parts = [p.strip() for p in raw.split("\n\n") if p.strip()]
+            paragraphs.extend(parts)
+    return len(paragraphs)
