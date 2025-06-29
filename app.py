@@ -85,9 +85,12 @@ def handle_join(data):
         socketio.emit('start_task', {'done': True}, room=room)
     else:
         sentence_list = split_sentences(paragraph['text'])
+        index = get_or_create_progress(room)
         socketio.emit('start_task', {
             'paragraph': paragraph,
-            'sentences': sentence_list
+            'sentences': sentence_list,
+            'total': 1000,
+            'current_index': index
         }, room=room)
 
 @socketio.on('submit_selection')
@@ -133,6 +136,13 @@ def handle_submit(data):
         if is_match:
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score1, p1))
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score2, p2))
+
+        progress_index = get_or_create_progress(room)
+        if progress_index > 0 and progress_index % 1000 == 0:
+            bonus = 50
+            c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (bonus, p1))
+            c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (bonus, p2))
+
         c.execute('''INSERT INTO matches
                      (paragraph_id, player1, player2, is_match, selections_p1, selections_p2,
                       score_p1, score_p2, duration_p1, duration_p2, attempts_json)
@@ -153,10 +163,12 @@ def handle_submit(data):
             confirmations[room] = set()
             attempts[room] = 0
             attempt_logs[room] = []
-
+            index = get_or_create_progress(room)
             socketio.emit('start_task', {
                 'paragraph': current_tasks[room],
-                'sentences': sentence_list
+                'sentences': sentence_list,
+                'total': 1000,
+                'current_index': index
             }, room=room)
     else:
         socketio.emit('attempt_failed', {

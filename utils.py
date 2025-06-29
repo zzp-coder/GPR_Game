@@ -62,3 +62,6 @@ def calculate_relative_score(duration1, duration2):
     score1 = duration2 / total
     score2 = duration1 / total
     return round(score1, 4), round(score2, 4)
+
+def get_total_paragraphs(room):
+    return len(get_paragraphs_for_room(room))

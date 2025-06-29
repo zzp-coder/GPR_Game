@@ -32,6 +32,15 @@ function startSocket(username) {
       box.appendChild(document.createTextNode(" "));
     });
     document.getElementById("status").innerText = "🟡 Waiting for your selection...";
+
+    // 更新进度条
+    if (data.total && data.current_index) {
+      document.getElementById("progress-status").innerText =
+        `📘 Progress: ${data.current_index} / ${data.total}`;
+
+      const percent = Math.floor((data.current_index / data.total) * 100);
+      document.getElementById("progress-bar").value = percent;
+    }
   });
 
   // 新增：伙伴未上线时的等待状态
