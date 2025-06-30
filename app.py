@@ -140,11 +140,16 @@ def handle_submit(data):
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score2, p2))
 
         progress_index = get_or_create_progress(room)
-        if progress_index > 0 and progress_index % 1000 == 0:
-            bonus = 50
-            c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (bonus, p1))
-            c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (bonus, p2))
+        if progress_index > 0:
+            bonus = 0
+            if progress_index % 1000 == 0:
+                bonus = 30
+            elif progress_index % 100 == 0:
+                bonus = 10
 
+            if bonus > 0:
+                c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (bonus, p1))
+                c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (bonus, p2))
         c.execute('''INSERT INTO matches
                      (paragraph_id, player1, player2, is_match, selections_p1, selections_p2,
                       score_p1, score_p2, duration_p1, duration_p2, attempts_json)
