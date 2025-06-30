@@ -57,13 +57,15 @@
   <section class="section">
     <div class="container">
       <div class="box">
-        <h2 class="title is-4">👋 Welcome, {{ username }}</h2>
-
-        <!-- 玩法说明 -->
-        <div class="notification is-light">
-          📘 <strong>How to play:</strong> Select sentences that express geopolitical risks.
-          Once both you and your partner confirm the same selection, you earn points together.
-          <a href="/how-to-play" target="_blank">Learn more</a>
+        <div class="level" style="margin-bottom: 1rem;">
+          <div class="level-left">
+          <h2 class="title is-4">👋 Welcome, {{ username }}</h2>
+        </div>
+        <div class="level-right">
+          <a class="button is-info is-light is-small" href="/how-to-play" target="_blank">
+            📘 How to Play
+          </a>
+        </div>
         </div>
 
         <!-- 🔄 新增：进度条显示 -->
