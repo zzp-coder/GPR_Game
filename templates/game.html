@@ -1,4 +1,3 @@
-<!-- templates/game.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -57,18 +56,23 @@
   <section class="section">
     <div class="container">
       <div class="box">
+
+        <!-- 顶部标题区域 -->
         <div class="level" style="margin-bottom: 1rem;">
           <div class="level-left">
-          <h2 class="title is-4">👋 Welcome, {{ username }}</h2>
-        </div>
-        <div class="level-right">
-          <a class="button is-info is-light is-small" href="/how-to-play" target="_blank">
-            📘 How to Play
-          </a>
-        </div>
+            <h2 class="title is-4">👋 Welcome, {{ username }}</h2>
+          </div>
+          <div class="level-item has-text-centered">
+            <button class="button is-primary is-light is-small" onclick="openDemoModal()">🎥 Watch Demo</button>
+          </div>
+          <div class="level-right">
+            <a class="button is-info is-light is-small" href="/how-to-play" target="_blank">
+              📘 How to Play
+            </a>
+          </div>
         </div>
 
-        <!-- 🔄 新增：进度条显示 -->
+        <!-- 进度条 -->
         <div id="progressContainer" style="margin-bottom: 10px;">
           <div id="progress-status" style="margin-bottom: 5px; font-weight: bold; text-align: right;">
             Progress: 0 / 0
@@ -76,15 +80,18 @@
           <progress id="progress-bar" value="0" max="100"></progress>
         </div>
 
+        <!-- 段落 -->
         <div id="paragraph-box" class="content"></div>
         <div id="status" class="notification is-info is-light">Waiting for task...</div>
 
+        <!-- 提交按钮 -->
         <button class="button is-link" onclick="submitSelection()">✅ Confirm Selection</button>
 
         <hr>
         <h3 class="title is-5">🏆 Leaderboard</h3>
         <div id="leaderboard" class="content"></div>
 
+        <!-- 暂停按钮 -->
         <div style="margin: 10px 0;">
           <button class="button is-warning is-light" onclick="pauseGame()">⏸️ Pause Game</button>
         </div>
@@ -93,9 +100,38 @@
     </div>
   </section>
 
+  <!-- 视频弹窗 -->
+  <div class="modal" id="demoModal">
+    <div class="modal-background" onclick="closeDemoModal()"></div>
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="box">
+        <video id="demoVideo" controls style="width: 100%;">
+          <source src="/static/Demo/output_with_subs.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    </div>
+    <button class="modal-close is-large" aria-label="close" onclick="closeDemoModal()"></button>
+  </div>
+
   <script>
     const username = "{{ username }}";
     window.onload = () => startSocket(username);
+
+    function openDemoModal() {
+      const modal = document.getElementById("demoModal");
+      modal.classList.add("is-active");
+      const video = document.getElementById("demoVideo");
+      video.play();
+    }
+
+    function closeDemoModal() {
+      const modal = document.getElementById("demoModal");
+      modal.classList.remove("is-active");
+      const video = document.getElementById("demoVideo");
+      video.pause();
+      video.currentTime = 0;
+    }
   </script>
 </body>
 </html>
