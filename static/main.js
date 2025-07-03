@@ -22,7 +22,7 @@ function startSocket(username) {
     // ✅ 更新进度条
     const idx = data.current_index || 0;
     const total = data.total || 1;
-    document.getElementById("progress-status").innerText = `📘 Progress: ${idx} / ${total}`;
+    document.getElementById("progress-status").innerText = `📊 Progress: ${idx} / ${total}`;
     document.getElementById("progress-bar").value = Math.round((idx / total) * 100);
 
     // ✅ 显示段落内容
