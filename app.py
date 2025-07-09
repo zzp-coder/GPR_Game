@@ -88,11 +88,13 @@ def handle_join(data):
     else:
         sentence_list = split_sentences(paragraph['text'])
         index = get_or_create_progress(room)
+        start_time = time.time()  # ✅ 加这一行
         socketio.emit('start_task', {
             'paragraph': paragraph,
             'sentences': sentence_list,
             'total': total,
-            'current_index': index
+            'current_index': index,
+            'start_time': start_time  # ✅ 加这一行
         }, room=room)
 
 @socketio.on('submit_selection')
@@ -102,9 +104,10 @@ def handle_submit(data):
     room = f'{username}_{partner}' if username < partner else f'{partner}_{username}'
 
     now = time.time()
+    duration = max(0.001, now - data['start_time'])
     selections.setdefault(room, {})[username] = {
         'selected': data['selected'],
-        'duration': now - data['start_time']
+        'duration': duration
     }
     confirmations.setdefault(room, set()).add(username)
 
