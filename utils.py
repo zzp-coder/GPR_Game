@@ -56,12 +56,22 @@ def advance_progress(room):
     return get_paragraph_by_index(room, index)
 
 def calculate_relative_score(duration1, duration2):
+    # 限制范围在 [0.01, 1200]
+    duration1 = min(max(duration1, 0.01), 1200)
+    duration2 = min(max(duration2, 0.01), 1200)
+    # 限制比例不超过 9999:1
+    ratio = max(duration1 / duration2, duration2 / duration1)
+    if ratio > 9999:
+        if duration1 > duration2:
+            duration1 = duration2 * 9999
+        else:
+            duration2 = duration1 * 9999
     total = duration1 + duration2
     if total == 0:
         return 0.5, 0.5  # 平分
     score1 = duration2 / total
     score2 = duration1 / total
-    return round(score1, 4), round(score2, 4)
+    return round(score1, 5), round(score2, 5)
 
 def get_total_paragraphs():
     with open('data/paragraphs_team1.json') as f:
