@@ -79,6 +79,7 @@ def handle_join(data):
     if room not in current_tasks:
         index = get_or_create_progress(room)
         current_tasks[room] = get_paragraph_by_index(room, index)
+        current_tasks[room]["start_time"] = time.time()
         attempts[room] = 0
         attempt_logs[room] = []
 
@@ -104,7 +105,9 @@ def handle_submit(data):
     room = f'{username}_{partner}' if username < partner else f'{partner}_{username}'
 
     now = time.time()
-    duration = max(0.001, now - data['start_time'])
+    task_start_time = current_tasks[room].get("start_time", now)
+    duration = max(0.001, now - task_start_time)  # ✅ 使用后端统一时间
+    print("DURATION DEBUG:", username, now, task_start_time, duration)
     selections.setdefault(room, {})[username] = {
         'selected': data['selected'],
         'duration': duration
@@ -165,6 +168,7 @@ def handle_submit(data):
         conn.close()
 
         current_tasks[room] = advance_progress(room)
+        current_tasks[room]["start_time"] = time.time()  # ✅ 新任务重新计时
         if current_tasks[room]['id'] == -1:
             socketio.emit('start_task', {'done': True}, room=room)
         else:
