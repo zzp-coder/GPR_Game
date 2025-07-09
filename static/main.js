@@ -17,7 +17,7 @@ function startSocket(username) {
       return;
     }
 
-    start_time = Date.now() / 1000;
+    start_time = data.start_time;
 
     // ✅ 更新进度条
     const idx = data.current_index || 0;
