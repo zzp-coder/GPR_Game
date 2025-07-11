@@ -3,16 +3,19 @@ from werkzeug.security import generate_password_hash
 import os
 import json
 from config import DB_PATH
+
 print("🛠 Running init_db.py to initialize database...")
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
+# 删除旧表
 c.execute('DROP TABLE IF EXISTS users')
 c.execute('DROP TABLE IF EXISTS matches')
 c.execute('DROP TABLE IF EXISTS progress')
 
+# 创建新表
 c.execute('''CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
     username TEXT UNIQUE,
@@ -42,7 +45,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS progress (
     paragraph_index INTEGER
 )''')
 
-# 从环境变量读取 JSON 格式的用户名密码字典
+# 读取用户信息
 users_json = os.getenv('USER_CREDENTIALS_JSON', '{}')
 admin_pass = os.getenv('ADMIN_PASSWORD', 'admin')
 
@@ -54,20 +57,20 @@ except json.JSONDecodeError:
 
 # 插入普通用户
 for username, password in user_dict.items():
-    # ✅ 排除 dave 和 carol，避免重复插入
-    if username in ['dave', 'carol']:
-        continue
     c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
               (username, generate_password_hash(password), 'player'))
 
-# ✅ 插入 dave 和 carol，保留原始积分
-c.execute('INSERT OR REPLACE INTO users (username, password, role, total_score) VALUES (?, ?, ?, ?)',
-          ('dave', generate_password_hash('changeme'), 'player', 907.05006))
-c.execute('INSERT OR REPLACE INTO users (username, password, role, total_score) VALUES (?, ?, ?, ?)',
-          ('carol', generate_password_hash('changeme'), 'player', 867.94994))
 # 插入管理员
 c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
           ("admin", generate_password_hash(admin_pass), 'admin'))
+
+# ✅ 额外更新 dave 和 carol 的初始积分（保留原密码）
+bonus_scores = {
+    "dave": 907.05006,
+    "carol": 867.94994
+}
+for user, score in bonus_scores.items():
+    c.execute('UPDATE users SET total_score = ? WHERE username = ?', (score, user))
 
 conn.commit()
 conn.close()
