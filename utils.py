@@ -74,6 +74,6 @@ def calculate_relative_score(duration1, duration2):
     return round(score1, 5), round(score2, 5)
 
 def get_total_paragraphs():
-    with open('data/paragraphs_team1.json') as f:
+    with open('data/paragraphs_team2.json') as f:
         data = json.load(f)
     return len(data)

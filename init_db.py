@@ -54,9 +54,17 @@ except json.JSONDecodeError:
 
 # 插入普通用户
 for username, password in user_dict.items():
+    # ✅ 排除 dave 和 carol，避免重复插入
+    if username in ['dave', 'carol']:
+        continue
     c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
               (username, generate_password_hash(password), 'player'))
 
+# ✅ 插入 dave 和 carol，保留原始积分
+c.execute('INSERT OR REPLACE INTO users (username, password, role, total_score) VALUES (?, ?, ?, ?)',
+          ('dave', generate_password_hash('changeme'), 'player', 907.05006))
+c.execute('INSERT OR REPLACE INTO users (username, password, role, total_score) VALUES (?, ?, ?, ?)',
+          ('carol', generate_password_hash('changeme'), 'player', 867.94994))
 # 插入管理员
 c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
           ("admin", generate_password_hash(admin_pass), 'admin'))
