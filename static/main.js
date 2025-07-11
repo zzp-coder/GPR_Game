@@ -47,10 +47,9 @@ function startSocket(username) {
     // ✅ 设置最短等待时间（仅 alice 和 bob）
     const confirmButton = document.querySelector("button.is-link");
     if (["alice", "bob"].includes(username.toLowerCase())) {
-      const charCount = data.paragraph.text.length;
-      const wordCount = Math.ceil(charCount / 5); // 估算一个词大约5字符
+      const wordCount = data.paragraph.text.trim().split(/\s+/).length;
       const readingTime = wordCount * 0.15;
-      min_wait_time = Math.max(5, Math.round(readingTime));
+      const min_wait_time = Math.max(5, Math.round(readingTime));
 
       confirmButton.disabled = true;
 
