@@ -1,19 +1,17 @@
 import eventlet
 eventlet.monkey_patch()
-from flask import Flask, render_template, request, redirect, session, jsonify, render_template_string, send_file, render_template
+
+from flask import Flask, render_template, request, redirect, session, jsonify, render_template_string, send_file
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.security import check_password_hash
-import json, sqlite3, time, os, io
+import json, sqlite3, time, os, io, shutil
 import spacy
-from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, advance_progress, \
-    calculate_relative_score, get_total_paragraphs
+from utils import split_sentences, load_pairs, get_or_create_progress, get_paragraph_by_index, advance_progress, calculate_relative_score, get_total_paragraphs
 from config import DB_PATH
-import shutil
 
 app = Flask(__name__)
 app.secret_key = 'secret!'
 socketio = SocketIO(app)
-
 nlp = spacy.load("en_core_web_sm")
 pairs = load_pairs()
 
@@ -89,13 +87,22 @@ def handle_join(data):
     else:
         sentence_list = split_sentences(paragraph['text'])
         index = get_or_create_progress(room)
-        start_time = time.time()  # ✅ 加这一行
+        start_time = time.time()
+        text_length = len(paragraph['text'])
+
+        # ✅ 设置最小等待时间（仅限 alice/bob）
+        if username in ['alice', 'bob']:
+            min_wait = round(5 + 0.15 * text_length)
+        else:
+            min_wait = 0
+
         socketio.emit('start_task', {
             'paragraph': paragraph,
             'sentences': sentence_list,
             'total': total,
             'current_index': index,
-            'start_time': start_time  # ✅ 加这一行
+            'start_time': start_time,
+            'min_wait': min_wait
         }, room=room)
 
 @socketio.on('submit_selection')
@@ -106,8 +113,7 @@ def handle_submit(data):
 
     now = time.time()
     task_start_time = current_tasks[room].get("start_time", now)
-    duration = max(0.001, now - task_start_time)  # ✅ 使用后端统一时间
-    print("DURATION DEBUG:", username, now, task_start_time, duration)
+    duration = max(0.001, now - task_start_time)
     selections.setdefault(room, {})[username] = {
         'selected': data['selected'],
         'duration': duration
@@ -168,7 +174,7 @@ def handle_submit(data):
         conn.close()
 
         current_tasks[room] = advance_progress(room)
-        current_tasks[room]["start_time"] = time.time()  # ✅ 新任务重新计时
+        current_tasks[room]["start_time"] = time.time()
         if current_tasks[room]['id'] == -1:
             socketio.emit('start_task', {'done': True}, room=room)
         else:
@@ -179,11 +185,16 @@ def handle_submit(data):
             attempt_logs[room] = []
             index = get_or_create_progress(room)
             total = get_total_paragraphs()
+
+            min_wait = round(5 + 0.15 * len(current_tasks[room]['text'])) if username in ['alice', 'bob'] else 0
+
             socketio.emit('start_task', {
                 'paragraph': current_tasks[room],
                 'sentences': sentence_list,
                 'total': total,
-                'current_index': index
+                'current_index': index,
+                'start_time': time.time(),
+                'min_wait': min_wait
             }, room=room)
     else:
         socketio.emit('attempt_failed', {
@@ -199,7 +210,6 @@ def handle_pause_request(data):
     partner = pairs.get(username)
     if not partner:
         return
-
     room = f'{username}_{partner}' if username < partner else f'{partner}_{username}'
     socketio.emit('pause_started', {'seconds': seconds}, room=room)
 
@@ -290,22 +300,16 @@ def download_db():
 def admin_reset_db():
     if session.get('role') != 'admin':
         return redirect('/')
-
     if request.method == "POST":
         if os.path.exists(DB_PATH):
             shutil.copy(DB_PATH, DB_PATH + ".bak")
-
-        if os.path.exists(DB_PATH):
             os.remove(DB_PATH)
-
         os.system("python3 init_db.py")
-
         return render_template_string("""
         <h3>✅ 数据库已重置</h3>
         <p>旧数据库已备份为 <code>game.db.bak</code></p>
         <p><a href='/admin'>返回 Admin 面板</a></p>
         """)
-
     return render_template_string("""
     <h3>⚠️ 确认要重置数据库？</h3>
     <p>这将删除所有用户数据、得分和配对记录。</p>

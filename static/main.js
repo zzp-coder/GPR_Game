@@ -1,15 +1,15 @@
-// ✅ main.js - 增加暂停功能逻辑
 let socket;
 let selected = new Set();
 let start_time;
-let pause_end_time = 0;  // 前端倒计时
+let pause_end_time = 0;
+let confirmEnableTimeout = null;
 
 function startSocket(username) {
   socket = io();
   socket.emit("join", { username });
 
   socket.on("start_task", data => {
-    // 若处于暂停中，则不更新任务
+    // 若处于暂停中，不处理任务
     if (Date.now() / 1000 < pause_end_time) return;
 
     if (data.done) {
@@ -19,13 +19,13 @@ function startSocket(username) {
 
     start_time = data.start_time;
 
-    // ✅ 更新进度条
+    // 更新进度条
     const idx = data.current_index || 0;
     const total = data.total || 1;
     document.getElementById("progress-status").innerText = `📊 Progress: ${idx} / ${total}`;
     document.getElementById("progress-bar").value = Math.round((idx / total) * 100);
 
-    // ✅ 显示段落内容
+    // 显示段落句子
     const box = document.getElementById("paragraph-box");
     box.innerHTML = "";
     selected.clear();
@@ -35,6 +35,7 @@ function startSocket(username) {
       span.dataset.idx = idx;
       span.textContent = sent;
       span.onclick = () => {
+        if (span.classList.contains("disabled")) return;
         if (span.classList.toggle("selected")) {
           selected.add(idx);
         } else {
@@ -44,7 +45,35 @@ function startSocket(username) {
       box.appendChild(span);
       box.appendChild(document.createTextNode(" "));
     });
+
+    const confirmButton = document.querySelector("button.is-link");
+    const pauseStatus = document.getElementById("pause-status");
+    if (confirmButton) {
+      confirmButton.disabled = true;
+      confirmButton.style.backgroundColor = "gray";
+    }
+    document.querySelectorAll(".sentence").forEach(span => {
+      span.classList.add("disabled");
+      span.style.pointerEvents = "none";
+    });
+
+    if (pauseStatus) pauseStatus.style.display = "none";
+
     document.getElementById("status").innerText = "🟡 Waiting for your selection...";
+
+    const minWait = data.min_wait || 0;
+    if (confirmEnableTimeout) clearTimeout(confirmEnableTimeout);
+
+    confirmEnableTimeout = setTimeout(() => {
+      if (confirmButton) {
+        confirmButton.disabled = false;
+        confirmButton.style.backgroundColor = ""; // 恢复原色
+      }
+      document.querySelectorAll(".sentence").forEach(span => {
+        span.classList.remove("disabled");
+        span.style.pointerEvents = "auto";
+      });
+    }, minWait * 1000);
   });
 
   socket.on("waiting_partner", () => {
@@ -69,7 +98,6 @@ function startSocket(username) {
       pauseStatus.innerText = `⏸️ Game paused. Resumes in ${remaining} seconds.`;
     }
 
-    // 禁用“确认”按钮和句子点击
     if (confirmButton) confirmButton.disabled = true;
     document.querySelectorAll(".sentence").forEach(span => span.style.pointerEvents = "none");
 
