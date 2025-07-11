@@ -2,14 +2,13 @@ let socket;
 let selected = new Set();
 let start_time;
 let pause_end_time = 0;
-let confirmEnableTimeout = null;
+let min_wait_time = 0;
 
 function startSocket(username) {
   socket = io();
   socket.emit("join", { username });
 
   socket.on("start_task", data => {
-    // 若处于暂停中，不处理任务
     if (Date.now() / 1000 < pause_end_time) return;
 
     if (data.done) {
@@ -19,13 +18,11 @@ function startSocket(username) {
 
     start_time = data.start_time;
 
-    // 更新进度条
     const idx = data.current_index || 0;
     const total = data.total || 1;
     document.getElementById("progress-status").innerText = `📊 Progress: ${idx} / ${total}`;
     document.getElementById("progress-bar").value = Math.round((idx / total) * 100);
 
-    // 显示段落句子
     const box = document.getElementById("paragraph-box");
     box.innerHTML = "";
     selected.clear();
@@ -35,7 +32,6 @@ function startSocket(username) {
       span.dataset.idx = idx;
       span.textContent = sent;
       span.onclick = () => {
-        if (span.classList.contains("disabled")) return;
         if (span.classList.toggle("selected")) {
           selected.add(idx);
         } else {
@@ -46,34 +42,28 @@ function startSocket(username) {
       box.appendChild(document.createTextNode(" "));
     });
 
-    const confirmButton = document.querySelector("button.is-link");
-    const pauseStatus = document.getElementById("pause-status");
-    if (confirmButton) {
-      confirmButton.disabled = true;
-      confirmButton.style.backgroundColor = "gray";
-    }
-    document.querySelectorAll(".sentence").forEach(span => {
-      span.classList.add("disabled");
-      span.style.pointerEvents = "none";
-    });
-
-    if (pauseStatus) pauseStatus.style.display = "none";
-
     document.getElementById("status").innerText = "🟡 Waiting for your selection...";
 
-    const minWait = data.min_wait || 0;
-    if (confirmEnableTimeout) clearTimeout(confirmEnableTimeout);
+    // ✅ 设置最短等待时间（仅 alice 和 bob）
+    const confirmButton = document.querySelector("button.is-link");
+    if (["alice", "bob"].includes(username.toLowerCase())) {
+      const charCount = data.paragraph.text.length;
+      const wordCount = Math.ceil(charCount / 5); // 估算一个词大约5字符
+      const readingTime = wordCount * 0.15;
+      min_wait_time = Math.max(5, Math.round(readingTime));
 
-    confirmEnableTimeout = setTimeout(() => {
-      if (confirmButton) {
-        confirmButton.disabled = false;
-        confirmButton.style.backgroundColor = ""; // 恢复原色
-      }
-      document.querySelectorAll(".sentence").forEach(span => {
-        span.classList.remove("disabled");
-        span.style.pointerEvents = "auto";
-      });
-    }, minWait * 1000);
+      confirmButton.disabled = true;
+
+      const interval = setInterval(() => {
+        const now = Date.now() / 1000;
+        if (now - start_time >= min_wait_time) {
+          confirmButton.disabled = false;
+          clearInterval(interval);
+        }
+      }, 500);
+    } else {
+      confirmButton.disabled = false;
+    }
   });
 
   socket.on("waiting_partner", () => {
@@ -92,6 +82,7 @@ function startSocket(username) {
     const confirmButton = document.querySelector("button.is-link");
 
     let remaining = seconds;
+    pause_end_time = Date.now() / 1000 + seconds;
 
     if (pauseStatus) {
       pauseStatus.style.display = "block";
@@ -99,7 +90,6 @@ function startSocket(username) {
     }
 
     if (confirmButton) confirmButton.disabled = true;
-    document.querySelectorAll(".sentence").forEach(span => span.style.pointerEvents = "none");
 
     const interval = setInterval(() => {
       remaining -= 1;
@@ -110,8 +100,16 @@ function startSocket(username) {
       if (remaining <= 0) {
         clearInterval(interval);
         if (pauseStatus) pauseStatus.style.display = "none";
-        if (confirmButton) confirmButton.disabled = false;
-        document.querySelectorAll(".sentence").forEach(span => span.style.pointerEvents = "auto");
+
+        // 重新启用确认按钮（取决于是否还有最小等待限制）
+        if (["alice", "bob"].includes(username.toLowerCase())) {
+          const now = Date.now() / 1000;
+          if (now - start_time >= min_wait_time) {
+            confirmButton.disabled = false;
+          }
+        } else {
+          confirmButton.disabled = false;
+        }
       }
     }, 1000);
   });
@@ -165,15 +163,4 @@ function pauseGame() {
   if (minutes && !isNaN(minutes) && parseInt(minutes) > 0) {
     socket.emit("pause_request", { minutes: parseInt(minutes) });
   }
-}
-
-function countdown(endTime) {
-  const el = document.getElementById("pause-status");
-  function update() {
-    const remaining = Math.max(0, Math.floor(endTime - Date.now() / 1000));
-    el.innerText = `⏸️ Game paused. Resumes in ${remaining}s.`;
-    if (remaining > 0) setTimeout(update, 1000);
-    else el.style.display = "none";
-  }
-  update();
 }
