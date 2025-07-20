@@ -48,8 +48,8 @@ function startSocket(username) {
     const confirmButton = document.querySelector("button.is-link");
     if (["alice", "bob"].includes(username.toLowerCase())) {
       const wordCount = data.paragraph.text.trim().split(/\s+/).length;
-      const readingTime = wordCount < 50 ? wordCount * 0.1 : wordCount * 0.13;
-      const min_wait_time = Math.max(5, Math.round(readingTime));
+      const readingTime = wordCount < 50 ? wordCount * 0.13 : wordCount * 0.16;
+      min_wait_time = Math.max(5, Math.round(readingTime));
 
       confirmButton.disabled = true;
 
@@ -160,6 +160,6 @@ function updateLeaderboard() {
 function pauseGame() {
   const minutes = prompt("Pause for how many minutes?", "1");
   if (minutes && !isNaN(minutes) && parseInt(minutes) > 0) {
-    socket.emit("pause_request", { minutes: parseInt(minutes) });
+    socket.emit("pause_request", { username, minutes: parseInt(minutes) });
   }
 }
