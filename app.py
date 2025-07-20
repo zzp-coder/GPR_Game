@@ -148,11 +148,11 @@ def handle_submit(data):
         c = conn.cursor()
         if is_match:
             if len(s1) == 0:
-                score1 = score2 = 0.1
+                score1 = score2 = 0.5
             else:
                 raw_score1, raw_score2 = calculate_relative_score(dur1, dur2)
-                score1 = round(raw_score1 * 2, 5)
-                score2 = round(raw_score2 * 2, 5)
+                score1 = round(raw_score1 * 5.5, 5)
+                score2 = round(raw_score2 * 5.5, 5)
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score1, p1))
             c.execute('UPDATE users SET total_score = total_score + ? WHERE username = ?', (score2, p2))
         else:

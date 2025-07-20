@@ -66,8 +66,10 @@ c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 
 
 # ✅ 额外更新 dave 和 carol 的初始积分（保留原密码）
 bonus_scores = {
-    "dave": 907.05006,
-    "carol": 867.94994
+    "dave": 4559.38835,
+    "carol": 4521.61165,
+    "bob": 3515.51047,
+    "alice": 3575.48953
 }
 for user, score in bonus_scores.items():
     c.execute('UPDATE users SET total_score = ? WHERE username = ?', (score, user))
