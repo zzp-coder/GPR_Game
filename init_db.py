@@ -64,12 +64,12 @@ for username, password in user_dict.items():
 c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)',
           ("admin", generate_password_hash(admin_pass), 'admin'))
 
-# ✅ 额外更新 dave 和 carol 的初始积分（保留原密码）
+# ✅ 额外更新
 bonus_scores = {
-    "dave": 5559.38835,
-    "carol": 5521.61165,
-    "bob": 3515.51048,
-    "alice": 3575.48958
+    "dave": 15559.38835,
+    "carol": 15521.61165,
+    "bob": 14623.74834,
+    "alice": 14939.25172
 }
 for user, score in bonus_scores.items():
     c.execute('UPDATE users SET total_score = ? WHERE username = ?', (score, user))
