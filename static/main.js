@@ -48,8 +48,8 @@ function startSocket(username) {
     const confirmButton = document.querySelector("button.is-link");
     if (["alice", "bob"].includes(username.toLowerCase())) {
       const wordCount = data.paragraph.text.trim().split(/\s+/).length;
-      const readingTime = wordCount < 50 ? wordCount * 0.13 : wordCount * 0.16;
-      min_wait_time = Math.max(5, Math.round(readingTime));
+      const readingTime = wordCount < 50 ? wordCount * 0.08 : wordCount * 0.1;
+      min_wait_time = Math.max(3, Math.round(readingTime));
 
       confirmButton.disabled = true;
 

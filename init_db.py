@@ -66,8 +66,8 @@ c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 
 
 # ✅ 额外更新
 bonus_scores = {
-    "dave": 15559.38835,
-    "carol": 15521.61165,
+    "dave": 17593.38835,
+    "carol": 17062.61165,
     "bob": 14623.74834,
     "alice": 14939.25172
 }
