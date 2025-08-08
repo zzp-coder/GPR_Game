@@ -66,10 +66,10 @@ c.execute('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, 
 
 # ✅ 额外更新
 bonus_scores = {
-    "dave": 24897.26538,
-    "carol": 22011.22634,
-    "bob": 21077.55346,
-    "alice": 21517.4466
+    "dave": 25991.87654,
+    "carol": 22111.65634,
+    "bob": 21801.20136,
+    "alice": 22217.7987
 }
 for user, score in bonus_scores.items():
     c.execute('UPDATE users SET total_score = ? WHERE username = ?', (score, user))
